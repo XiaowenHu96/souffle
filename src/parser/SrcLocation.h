@@ -77,6 +77,14 @@ public:
         range.print(out);
         return out;
     }
+
+    std::pair<int, int> getRawStart() const {
+        return {start.line,start.column};
+    }
+
+    std::pair<int, int> getRawEnd() const {
+        return {end.line,end.column};
+    }
 };
 
 }  // end of namespace souffle

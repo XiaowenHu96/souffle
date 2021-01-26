@@ -89,7 +89,8 @@ std::string SrcLocation::extloc() const {
     std::ifstream in(filename);
     std::stringstream s;
     if (in.is_open()) {
-        s << "file " << baseName(filename) << " at line " << start.line << "\n";
+        s << "file " << baseName(filename) << " at line " << start.line << " (" << start.column << " : "
+          << end.column << ")\n";
         for (int i = 0; i < start.line - 1; ++i) {
             in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }

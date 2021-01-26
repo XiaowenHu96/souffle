@@ -83,6 +83,10 @@ public:
             const std::string& filename, FILE* in, ErrorReport& errorReport, DebugReport& debugReport);
     static Own<ast::TranslationUnit> parseTranslationUnit(
             const std::string& code, ErrorReport& errorReport, DebugReport& debugReport);
+    Own<ast::TranslationUnit> parse(const std::string& filename, const std::string& code,
+            ErrorReport& errorReport, DebugReport& debugReport);
+    static Own<ast::TranslationUnit> parseTranslationUnit(const std::string& filename,
+            const std::string& code, ErrorReport& errorReport, DebugReport& debugReport);
 
     void warning(const SrcLocation& loc, const std::string& msg);
     void error(const SrcLocation& loc, const std::string& msg);

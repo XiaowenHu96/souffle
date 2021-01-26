@@ -201,6 +201,10 @@ public:
         return out;
     }
 
+    std::set<Diagnostic> getDiagnostics() {
+        return diagnostics;
+    }
+
 private:
     std::set<Diagnostic> diagnostics;
     bool nowarn;

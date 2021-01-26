@@ -44,6 +44,8 @@ extern YY_BUFFER_STATE yy_scan_string(const char*, yyscan_t scanner);
 extern int yylex_destroy(yyscan_t scanner);
 extern int yylex_init_extra(scanner_data* data, yyscan_t* scanner);
 extern void yyset_in(FILE* in_str, yyscan_t scanner);
+extern void yyset_lineno(int line_number, yyscan_t scanner);
+extern void yyset_column(int line_colum, yyscan_t scanner);
 
 namespace souffle {
 
@@ -79,6 +81,34 @@ Own<ast::TranslationUnit> ParserDriver::parse(
     yylex_destroy(scanner);
 
     return std::move(translationUnit);
+}
+
+Own<ast::TranslationUnit> ParserDriver::parse(const std::string& filename, const std::string& code,
+        ErrorReport& errorReport, DebugReport& debugReport) {
+    translationUnit = mk<ast::TranslationUnit>(mk<ast::Program>(), errorReport, debugReport);
+
+    scanner_data data;
+    data.yyfilename = filename;
+    yyscan_t scanner;
+    yylex_init_extra(&data, &scanner);
+    yy_scan_string(code.c_str(), scanner);
+    // yy_scan_buffer does not init lineno and column correctly
+    // See
+    // https://stackoverflow.com/questions/14747410/flex-2-5-35-yy-scan-buffer-not-initializing-line-and-column-numbers
+    // https://github.com/westes/flex/issues/70
+    yyset_lineno(1, scanner);
+    yyset_column(1, scanner);
+    yy::parser parser(*this, scanner);
+    parser.parse();
+
+    yylex_destroy(scanner);
+
+    return std::move(translationUnit);
+}
+Own<ast::TranslationUnit> ParserDriver::parseTranslationUnit(const std::string& filename,
+        const std::string& code, ErrorReport& errorReport, DebugReport& debugReport) {
+    ParserDriver parser;
+    return parser.parse(filename, code, errorReport, debugReport);
 }
 
 Own<ast::TranslationUnit> ParserDriver::parseTranslationUnit(
