@@ -1,0 +1,5 @@
+-I.
+-I./src
+-I/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include
+-std=c++17
+-xc++
