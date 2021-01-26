@@ -516,6 +516,7 @@ int main(int argc, char** argv) {
             mk<ast::transform::ReorderLiteralsTransformer>(), mk<ast::transform::ExecutionPlanChecker>(),
             std::move(provenancePipeline), mk<ast::transform::IOAttributesTransformer>());
 
+
     // Disable unwanted transformations
     if (Global::config().has("disable-transformers")) {
         std::vector<std::string> givenTransformers =
@@ -556,6 +557,9 @@ int main(int argc, char** argv) {
 
     // Apply all the transformations
     pipeline->apply(*astTranslationUnit);
+
+    // ------- check for semantic errors -------------
+    astTranslationUnit->getErrorReport().exitIfErrors();
 
     if (Global::config().has("show")) {
         // Output the transformed datalog and return

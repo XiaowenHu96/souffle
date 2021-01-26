@@ -21,6 +21,10 @@
 namespace souffle::ast::transform {
 
 bool Transformer::apply(TranslationUnit& translationUnit) {
+
+    if (translationUnit.getErrorReport().getNumErrors() > 0) {
+        return false;
+    }
     // invoke the transformation
     bool changed = transform(translationUnit);
 
@@ -29,7 +33,7 @@ bool Transformer::apply(TranslationUnit& translationUnit) {
     }
 
     /* Abort evaluation of the program if errors were encountered */
-    translationUnit.getErrorReport().exitIfErrors();
+    /* translationUnit.getErrorReport().exitIfErrors(); */
 
     return changed;
 }
