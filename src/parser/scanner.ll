@@ -199,21 +199,17 @@ WS [ \t\r\v\f]
 \#.*$                                 {
                                         char fname[yyleng+1];
                                         int lineno;
-                                        if ((sscanf(yytext, "# %d \"<built-in>\"", &lineno)>=1) 
-                                        || (sscanf(yytext, "# %d \"<command-line>\"", &lineno)>=1)) {
-                                          // Nothing need to be done.
-                                        } else if(sscanf(yytext,"# %d \"%[^\"]",&lineno,fname)>=2) {
+                                        if(sscanf(yytext,"# %d \"%[^\"]",&lineno,fname)>=2) {
                                           assert(strlen(fname) > 0 && "failed conversion");
                                           fname[strlen(fname)]='\0';
                                           yycolumn = 1; yylineno = lineno-1;
                                           yyfilename = fname;
-                                        } 
-                                        /* else if(sscanf(yytext,"# %d \"%[^\"] %d",&lineno,fname)>=2) { */
-                                        /*   assert(strlen(fname) > 0 && "failed conversion"); */
-                                        /*   fname[strlen(fname)]='\0'; */
-                                        /*   yycolumn = 1; yylineno = lineno-1; */
-                                        /*   yyfilename = fname; */
-                                        /* } */
+                                        } else if(sscanf(yytext,"#line %d \"%[^\"]",&lineno,fname)>=2) {
+                                          assert(strlen(fname) > 0 && "failed conversion");
+                                          fname[strlen(fname)]='\0';
+                                          yycolumn = 1; yylineno = lineno-1;
+                                          yyfilename = fname;
+                                        }
                                       }
 "//".*$                               { }
 "/*"                                  { BEGIN(COMMENT); }
