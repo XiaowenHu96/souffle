@@ -2,7 +2,7 @@ name: CI-testing
 
 on: 
   pull_request:
-    types: [opened, edited]
+    types: [opened, synchronize]
   workflow_dispatch:
 
 jobs:
