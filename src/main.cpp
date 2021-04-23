@@ -484,8 +484,8 @@ int main(int argc, char** argv) {
     auto pipeline = mk<ast::transform::PipelineTransformer>(mk<ast::transform::ComponentChecker>(),
             mk<ast::transform::ComponentInstantiationTransformer>(),
             mk<ast::transform::IODefaultsTransformer>(),
-            mk<ast::transform::SimplifyAggregateTargetExpressionTransformer>(),
-            mk<ast::transform::UniqueAggregationVariablesTransformer>(),
+                    mk<ast::transform::SimplifyAggregateTargetExpressionTransformer>(),
+                    mk<ast::transform::UniqueAggregationVariablesTransformer>(),
             mk<ast::transform::FixpointTransformer>(mk<ast::transform::PipelineTransformer>(
                     mk<ast::transform::ResolveAnonymousRecordAliasesTransformer>(),
                     mk<ast::transform::FoldAnonymousRecords>())),
