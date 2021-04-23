@@ -8,6 +8,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+      fetch-depth: 0
     
     - name: code-style
       run:  sh/run_test_format.sh
