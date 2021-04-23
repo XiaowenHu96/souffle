@@ -7,8 +7,8 @@
 }
 
 // instantiate the component several times
-.type type1
-.type type2
+.type type1 <: symbol
+.type type2 <: symbol
 
 .init x = A<type1>
 .init y = A<type2>

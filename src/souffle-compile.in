@@ -10,6 +10,8 @@
 # script that compiles a generated C++ program and executes it
 #
 
+set -e 
+
 # Show usage
 usage() {
   printf "Name:
@@ -18,10 +20,14 @@ Usage:
   souffle-compile [options] <FILE>.cpp
 Options:
   -h           show usage
-  -g           Build in debug mode
-  -s           enable shared library
+  -g           build in debug mode
+  -l           additional shared libraries
+  -L           library paths
+  -t           build in test mode, implies '-gw' and compiles using '-Werror'
   -v           verbose output
-  -w           enable warnings\n"
+  -w           enable warnings
+  -s <value>   use SWIG interface to generate into <value> language\n"
+
   exit 1;
 }
 
@@ -38,31 +44,25 @@ error() {
   fi
 }
 
-#Exit on error
-set -e
-
-## set environment variables
-
 # set by autoconf
 CXX="$(printenv CXX || true)"
-test -z "$CXX" && CXX=@CXX@
-CPPFLAGS="$(printenv CPPFLAGS || true) @CPPFLAGS@"
+test -z "$CXX" && CXX="@CXX@"
+CPPFLAGS="$(printenv CPPFLAGS || true) -std=c++17 @CPPFLAGS@"
 CXXFLAGS="$(printenv CXXFLAGS || true) @SOUFFLE_CXXFLAGS@ -march=native"
 LDFLAGS="$(printenv LDFLAGS || true) @LDFLAGS@"
 LIBS="$(printenv LIBS || true) @LIBS@"
 
 # set by command flags
 WARNINGS=""
+SWIGLANG=""
 
 # find header files of souffle
-TEST_HEADER="souffle/CompiledRelation.h"
-HEADER_DIR=$(dirname $0)/../include
-test -f "$HEADER_DIR/$TEST_HEADER"
-error "installation error: souffle header files cannot be found" $?
+P="$(dirname $0)"
+HEADER_DIRS=" -I$P/../include -I$P/include -I$P/../include/souffle/swig -I$P/include/souffle/swig "
 
 # Options processing via getopts builtin, it is very limiting but on OSX the
 # default getopt is an old BSD getopt, so need this for portability
-while getopts "hwsvg" opt; do
+while getopts "hwtl:L:vgs:" opt; do
   case "$opt" in
     h|\?) # Show usage and exit
       usage;
@@ -70,14 +70,25 @@ while getopts "hwsvg" opt; do
     g) # enable debug mode
       CXXFLAGS="$(echo $CXXFLAGS|sed 's/-O[0-9s]//g') -g -O0";
     ;;
-    s) # enable shared library
-      LDFLAGS="$LDFLAGS -L. -lfunctors";
+    L) # enable shared library
+      LDFLAGS="$LDFLAGS -L${OPTARG}";
+    ;;
+    l) # enable shared library
+      LIBS="$LIBS -l${OPTARG}";
+    ;;
+    t) # enable testing mode (debug + warnings + `-Werror`)
+      CXXFLAGS="$(echo $CXXFLAGS|sed 's/-O[0-9s]//g') -g -O0 -Wall -Wextra -Werror";
+      WARNINGS="1"
     ;;
     w) # enable warnings
+      CXXFLAGS="$(echo $CXXFLAGS) -Wall -Wextra"
       WARNINGS="1"
     ;;
     v) # Verbose output
       set -x
+    ;;
+    s) # Set swig language
+      SWIGLANG="${OPTARG}";
     ;;
   esac
 done
@@ -103,22 +114,73 @@ cd "$(dirname $1)"
 dir="$PWD"
 cd "$OLDPWD"
 
+# Make temp folder and copy relevant files there
+if [ -n "$SWIGLANG" ]
+then
+  # set environment variables
+  # directory where swig interface files are in souffle
+  TMP_DIR="$(mktemp -d)"
+  BASE_DIR="$(dirname $0)"
+
+  if [ -d "$BASE_DIR/include/souffle/swig" ];
+  then
+    cp "$BASE_DIR/include/souffle/swig/SwigInterface.h" "$TMP_DIR"
+    cp "$BASE_DIR/include/souffle/swig/SwigInterface.i" "$TMP_DIR"
+  else
+    cp "$BASE_DIR/../include/souffle/swig/SwigInterface.h" "$TMP_DIR"
+    cp "$BASE_DIR/../include/souffle/swig/SwigInterface.i" "$TMP_DIR"
+  fi
+
+  cd "$TMP_DIR"
+  swig -c++ -"$SWIGLANG" "SwigInterface.i"
+
+  # Checks input language and compiles files with local python3 config or local java_home config
+  if [ "$SWIGLANG" = "python" ]
+  then
+    $CXX -fPIC -c -D__EMBEDDED_SOUFFLE__ SwigInterface_wrap.cxx $dir/$exe.cpp $(python3-config --cflags) $HEADER_DIRS 2>&1
+    $CXX -shared SwigInterface_wrap.o $exe.o $(python3-config --ldflags) -o _SwigInterface.so -lstdc++
+  elif [ "$SWIGLANG" = "java" ]
+  then
+    JAVADIR="$(printenv JAVA_HOME || java -XshowSettings:properties -version 2>&1 | grep java.home | sed 's/^.*= //')"
+
+    if [ -z "$JAVADIR" ]
+    then
+      error "JAVA_HOME environment variable has not been set"
+    fi
+
+    $CXX -fPIC -c -D__EMBEDDED_SOUFFLE__ SwigInterface_wrap.cxx $dir/$exe.cpp -I$JAVADIR -I$JAVADIR/include -I$JAVADIR/include/linux  -I$JAVADIR/include/darwin -I/usr/lib/x86_64-linux-gnu/ $HEADER_DIRS 2>&1
+    $CXX -shared SwigInterface_wrap.o $exe.o -o libSwigInterface.so -lstdc++
+  fi
+
+  # move generated files to same directory as cpp file
+  for file in `ls | grep -v "SwigInterface.i" | grep -v "SwigInterface.h"`
+  do
+    mv "$file" "$dir"
+  done
+
+  rm -rf "$TMP_DIR"
+  exit 0
+fi
+
 # Compile
 rm -f $dir/$exe
-$CXX $CXXFLAGS $CPPFLAGS -o$dir/$exe $1 $LIBS -I$HEADER_DIR $OMP_FLAG $LDFLAGS 2> $dir/$exe.$$.ccerr
+CCERR=$(mktemp)
+# HACK: don't exit if the compile fails, we need to report the error
+( $CXX $CXXFLAGS $CPPFLAGS -o$dir/$exe $1 $HEADER_DIRS $OMP_FLAG $LDFLAGS $LIBS 2> $CCERR ) || true
+
 if test -f $dir/$exe
 then
   if [ "$WARNINGS" = 1 ]
   then
-     echo "$CXX $CXXFLAGS $CPPFLAGS -o$dir/$exe $1 $LIBS -I$HEADER_DIR"
-     cat $dir/$exe.$$.ccerr 1>&2
+     echo "$CXX $CXXFLAGS $CPPFLAGS -o$dir/$exe $1 $LIBS $HEADER_DIRS"
+     cat $CCERR 1>&2
   fi
-  rm $dir/$exe.$$.ccerr
+  rm $CCERR
 else
   echo "compiler error: cannot compile source file $1" 1>&2
-  echo "$CXX $CXXFLAGS $CPPFLAGS -o$dir/$exe $1 $LIBS -I$HEADER_DIR"
-  cat $dir/$exe.$$.ccerr 1>&2
-  rm -f $dir/$exe.$$.ccerr
+  echo "$CXX $CXXFLAGS $CPPFLAGS -o$dir/$exe $1 $LIBS $HEADER_DIRS"
+  cat $CCERR 1>&2
+  rm -f $CCERR
   exit 1
 fi
 exit 0

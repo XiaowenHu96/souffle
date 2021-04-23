@@ -1,0 +1,20 @@
+name: Github-action-0.01
+
+on: pull_request
+
+jobs:
+  basic:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: code-style
+      run:  sh/run_test_format.sh
+      
+    - name: setup
+      run: ./bootstrap && ./configure
+    - name: make
+      run: make -j4
+    - name: check
+      run: TESTSUITEFLAGS=-j4 make check -j4 || (sh/after_failure.sh && false)

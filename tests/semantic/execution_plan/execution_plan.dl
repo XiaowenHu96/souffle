@@ -1,12 +1,9 @@
-.type S
+.type S <: symbol
 
 
 .decl r(x:S,y:S)
 
 r(a,d) :- r(a,b),r(b,c),r(c,d).
-
-r(a,d) :- r(a,b),r(b,c),r(c,d).
-        .strict
 
 // this one is ok
 r(a,d) :- r(a,b),r(b,c),r(c,d).

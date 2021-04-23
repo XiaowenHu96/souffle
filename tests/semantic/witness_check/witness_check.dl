@@ -25,18 +25,33 @@ e(5).
 a(x,y) :- b(x), y = max z : { c(x,z) }.
 
 // Valid - groundedness should propagate down the levels
-a(x,y) :- b(x), y = max z : { c(r,z), !d(x), r = count :  { e(x) } }.
+// a(x,y) :- b(x), y = max z : { c(r,z), !d(x), r = count :  { e(x) } }.
 
-// Invalid because of the variable x regardless of aggregator type
+// Valid for the same reason as above
+a(x, y) :- b(x), y = max z : { c(_, z), !d(x) }.
+
+// Invalid because of the variable x and the aggregator type is count/sum
 a(x,y) :- y = count : { c(x,_) }.
 a(x,y) :- y = sum z : { c(x,z) }.
+
+// Valid because witnesses can be exported from min/max aggregates
 a(x,y) :- y = max z : { c(x,z) }.
 a(x,y) :- y = min z : { c(x,z) }.
 
-// Invalid because of the nested variable r
+// Invalid because witnesses cannot be exported from a sum aggregate
+a(x,y) :- b(x), x = sum z : { c(y, z) }.
+
+// Invalid because witnesses cannot be exported from a count aggregate
+a(x, y) :- b(x+1), y = count : { c(x, _) }.
+
+// Valid because the ungrounded occurrence of r can transfer from
+// the aggregate body
+a(x, y) :- r < 10, d(x), y = min z : { e(r), c(r, z) }.
+
+// Invalid only because the sum aggregate cannot contain a witness
 a(x,y) :- b(x), y = max z : { !d(r), !e(m), c(x,z), m = sum j : { c(r,j) } }.
 
-// Invalid because of the variable x
+// Invalid because we cannot export a witness from a count
 a(x,y) :- y = sum z : { c(z,m), m = count : { e(x) } }.
 
 // Invalid because of the variable y and the nested variable m

@@ -1,7 +1,7 @@
-.type T
-.type S
-.type R
-.type Q
+.type T <: symbol
+.type S <: symbol
+.type R <: symbol
+.type Q <: symbol
 .decl H (t:T)
 .decl A (t:T)
 .decl B (s:S)

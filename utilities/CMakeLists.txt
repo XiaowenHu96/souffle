@@ -2,14 +2,16 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.6)
 PROJECT(souffle)
 SET(CMAKE_CXX_STANDARD 11)
 ADD_EXECUTABLE(souffle
-        ./src/CompiledIndexUtils.h
+        ./src/swig/SwigInterface.h
+        ./src/swig/SwigInterface.cpp
+        ./src/swig/SwigInterface.i
         ./src/ProfileEvent.h
         ./src/CompiledRecord.h
         ./src/AstAttribute.h
         ./src/AstAnalysis.h
         ./src/RamCondition.h
         ./src/AstComponentChecker.h
-        ./src/ExplainProvenanceSLD.h
+        ./src/ExplainProvenanceImpl.h
         ./src/BTree.h
         ./src/GraphUtils.h
         ./src/profile/html_string.h
@@ -45,22 +47,22 @@ ADD_EXECUTABLE(souffle
         ./src/ErrorReport.h
         ./src/AstTransformer.h
         ./src/WriteStreamCSV.h
+        ./src/WriteStreamJSON.h
         ./src/AstTypeAnalysis.h
         ./src/SymbolTable.h
         ./src/InterpreterRelation.h
         ./src/InterpreterIndex.h
         ./src/SignalHandler.h
-        ./src/StringPool.h
         ./src/WriteStreamSQLite.h
         ./src/AstTranslator.h
         ./src/ReadStreamCSV.h
+        ./src/ReadStreamJSON.h
         ./src/TypeSystem.h
         ./src/UnaryFunctorOps.h
         ./src/test/test.h
         ./src/ProfileDatabase.h
         ./src/SrcLocation.h
         ./src/RamTranslationUnit.h
-        ./src/CompiledTuple.h
         ./src/htmx86.h
         ./src/ComponentModel.h
         ./src/BinaryConstraintOps.h
@@ -89,7 +91,6 @@ ADD_EXECUTABLE(souffle
         ./src/Interpreter.h
         ./src/RamTransformer.h
         ./src/RamVisitor.h
-        ./src/Mpi.h
         ./src/EventProcessor.h
         ./src/InterpreterContext.h
         ./src/AstTranslationUnit.h
@@ -159,8 +160,6 @@ ADD_EXECUTABLE(souffle
         ./src/AstTransforms.cpp
         ./src/AstPragma.cpp
         ./src/RamOperation.cpp
-        ./src/souffle2bdd.cpp
-        ./src/souffle2lb.cpp
         ./src/TypeSystem.cpp
         ./src/AstComponentChecker.cpp
         ./src/AstParserUtils.cpp

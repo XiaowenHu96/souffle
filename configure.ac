@@ -4,9 +4,22 @@
 # - https://opensource.org/licenses/UPL
 # - <souffle root>/licenses/SOUFFLE-UPL.txt
 
-AC_INIT(souffle, m4_esyscmd([git describe --tags --always | tr -d '\n']), [souffle-talk@googlegroups.com])
+m4_define([SOUFFLE_VERSION], m4_esyscmd([
+  souffle_version=$(git describe --tags --always)
+  test -z "$souffle_version" && souffle_version=$(pwd | sed '/^.*souffle-[0-9\.]*$/!d' | sed 's/^.*souffle-//')
+  test -z "$souffle_version" && souffle_version="unknown"
+  echo $souffle_version| tr -d '\n']))
+
+AC_INIT(souffle, SOUFFLE_VERSION, [https://github.com/souffle-lang/souffle/issues], souffle, [https://github.com/souffle-lang/souffle])
+AC_CONFIG_AUX_DIR([auxfiles])
 AC_PREREQ(2.68)
 AC_COPYRIGHT(['2013-15 Oracle and/or its affiliates'])
+
+DEBDATE=$(date -R)
+AC_SUBST([DEBDATE])
+
+ISODATE=$(date +%Y-%m-%d)
+AC_SUBST([ISODATE])
 
 #LT_PREREQ([2.4])
 LT_INIT([dlopen])
@@ -17,26 +30,27 @@ AC_CANONICAL_HOST   # host_cpu, host_vendor, and host_os
 
 AM_INIT_AUTOMAKE([foreign subdir-objects 1.9 tar-pax])
 AM_MAINTAINER_MODE
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_MACRO_DIRS([m4])
-AC_CONFIG_MACRO_DIR([m4])
 
 dnl Do not set default CFLAGS and CXXFLAGS
 ENV_CXXFLAGS="$CXXFLAGS"
-CXXFLAGS=" -Wall -std=c++11"
+CXXFLAGS=" -fwrapv "
 
 # Disable provenance
 AC_ARG_ENABLE(
-  [provenance],
-  AS_HELP_STRING([--disable-provenance], [Disable provenance display])
+  [ncurses],
+  AS_HELP_STRING([--disable-ncurses], [Disable ncurses-based provenance display])
 )
-AS_IF([test "x$enable_provenance" != "xno"], [
+AS_IF([test "x$enable_ncurses" != "xno"], [
   AX_WITH_CURSES
-  AS_IF([test "x$ax_cv_ncurses" != "xyes"],[AC_MSG_ERROR([ncurses library is needed for support of provenance display. To build without provenance support use --disable-provenance.])])
+  AS_IF([test "x$ax_cv_ncurses" != "xyes"],[AC_MSG_ERROR([ncurses library is needed for support of the ncurses provenance display. To build without ncurses support use --disable-ncurses.])])
   AS_VAR_APPEND(LIBS, ["$CURSES_LIB"])
-  AS_VAR_APPEND(CXXFLAGS, [" -DUSE_PROVENANCE "])
+  AS_VAR_APPEND(CXXFLAGS, [" -DUSE_NCURSES "])
 ])
-AM_CONDITIONAL([PROVENANCE], [test "x$enable_provenance" != "xno"])
+AM_CONDITIONAL([NCURSES], [test "x$enable_ncurses" != "xno"])
+
+AC_LANG(C++)
 
 # Enable sanitise memory mode
 AC_ARG_ENABLE(
@@ -68,29 +82,26 @@ if test "$BUILD_TYPE" == "Debug" ; then
   CXXFLAGS="$CXXFLAGS -O0 -g3"
 fi
 
-# Enable MPI
+# Enable SWIG
 AC_ARG_ENABLE(
-  [mpi],
-  [AS_HELP_STRING([--enable-mpi], [Enable MPI])]
+  [swig],
+  [AS_HELP_STRING([--enable-swig], [Enable SWIG])]
 )
-AS_IF([test "x$enable_mpi" = "xyes"], [
-    AS_VAR_APPEND(CXXFLAGS, [" -DUSE_MPI "])
-    AS_VAR_APPEND(CXXFLAGS, [" $(mpiCC --showme:compile) "])
-    AS_VAR_APPEND(LDFLAGS, [" $(mpiCC --showme:link) "])
+AS_IF([test "x$enable_swig" = "xyes"], [
+  AC_CHECK_PROG(JAVAC, javac, javac)
+  AS_IF([test -z "$JAVAC"], [AC_MSG_ERROR([javac not found, required for swig])])
+  AC_CHECK_PROG(PYTHON3, python3, python3)
+  AS_IF([test -z "$PYTHON3"], [AC_MSG_ERROR([python3 not found, required for swig])])
+  AC_CHECK_PROG(SWIG, swig, swig)
+  AS_IF([test -z "$SWIG"], [AC_MSG_ERROR([swig not found])])
 ])
-AM_CONDITIONAL([MPI], [test "x$enable_mpi" = "xyes"])
+AM_CONDITIONAL([SWIG], [test "x$enable_swig" = "xyes"])
 
-AC_ISC_POSIX
-AC_PROG_CPP
-AC_PROG_CC
 AC_PROG_CXX
+AX_CXX_COMPILE_STDCXX(17, noext)
+
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
-AM_PROG_CC_STDC
-
-# Check for flex and bison
-AM_PROG_LEX
-AC_PROG_YACC
 
 dnl Build doxygen documentation
 DX_DOXYGEN_FEATURE(ON)
@@ -116,7 +127,7 @@ AS_IF([test -z "$MCPP"], [AC_MSG_ERROR([mcpp not found.])])
 # Check for bison
 AC_CHECK_PROG(BISON, bison, bison)
 AS_IF([test -z "$BISON"], [AC_MSG_ERROR([bison not found.])])
-AX_PROG_BISON_VERSION([3.0.2], [], [AC_MSG_ERROR([bison version 3.0.2 is required.])])
+AX_PROG_BISON_VERSION([3.0.4], [], [AC_MSG_ERROR([bison version 3.0.4 is required.])])
 
 
 # Enable packaging option
@@ -158,9 +169,8 @@ if test -n "$SOUFFLE_PACKAGING"; then
       DISTRIBUTION=osx
     ;;
     linux*)
-      AC_CHECK_PROG(LSB_RELEASE, lsb_release, lsb_release)
-      AS_IF([test -z "$LSB_RELEASE"], [AC_MSG_ERROR([lsb_release required to detect LINUX distribution not found.])])
-      DISTRIBUTION=[`lsb_release -i | sed 's/^.*:[ \t]\+//' | tr '[A-Z]' '[a-z]'`]
+      DISTRIBUTION=[`. /etc/os-release; echo $ID`]
+      AS_IF([test -z "$DISTRIBUTION"], [DISTRIBUTION=unknown])
     ;;
     *BSD* | *bsd* )
       DISTRIBUTION=bsd
@@ -255,81 +265,21 @@ AC_CHECK_LIB(dl, dlopen,,
 
 dnl Enables OpenMP in the souffle compiler and interpreter
 AC_OPENMP
-AS_VAR_APPEND(CXXFLAGS, [" $OPENMP_CFLAGS "])
+AS_VAR_APPEND(CXXFLAGS, [" $OPENMP_CXXFLAGS "])
 AC_MSG_CHECKING( for target cpu)
 
 AC_CONFIG_TESTDIR([tests])
 AC_CONFIG_FILES([
   Makefile
   src/Makefile
+  src/ast/tests/Makefile
+  src/interpreter/tests/Makefile
+  src/ram/tests/Makefile
+  src/tests/Makefile
   tests/Makefile
   tests/atlocal
   tests/interface/functors/Makefile
 ])
-AC_CONFIG_LINKS([include/souffle/BinaryConstraintOps.h:src/BinaryConstraintOps.h])
-AC_CONFIG_LINKS([include/souffle/BTree.h:src/BTree.h])
-AC_CONFIG_LINKS([include/souffle/CompiledIndexUtils.h:src/CompiledIndexUtils.h])
-AC_CONFIG_LINKS([include/souffle/CompiledOptions.h:src/CompiledOptions.h])
-AC_CONFIG_LINKS([include/souffle/CompiledRecord.h:src/CompiledRecord.h])
-AC_CONFIG_LINKS([include/souffle/CompiledRelation.h:src/CompiledRelation.h])
-AC_CONFIG_LINKS([include/souffle/CompiledSouffle.h:src/CompiledSouffle.h])
-AC_CONFIG_LINKS([include/souffle/CompiledTuple.h:src/CompiledTuple.h])
-AC_CONFIG_LINKS([include/souffle/EventProcessor.h:src/EventProcessor.h])
-AC_CONFIG_LINKS([include/souffle/Explain.h:src/Explain.h])
-AC_CONFIG_LINKS([include/souffle/ExplainProvenance.h:src/ExplainProvenance.h])
-AC_CONFIG_LINKS([include/souffle/ExplainProvenanceSLD.h:src/ExplainProvenanceSLD.h])
-AC_CONFIG_LINKS([include/souffle/ExplainTree.h:src/ExplainTree.h])
-AC_CONFIG_LINKS([include/souffle/EquivalenceRelation.h:src/EquivalenceRelation.h])
-AC_CONFIG_LINKS([include/souffle/IODirectives.h:src/IODirectives.h])
-AC_CONFIG_LINKS([include/souffle/IOSystem.h:src/IOSystem.h])
-AC_CONFIG_LINKS([include/souffle/IterUtils.h:src/IterUtils.h])
-AC_CONFIG_LINKS([include/souffle/LambdaBTree.h:src/LambdaBTree.h])
-AC_CONFIG_LINKS([include/souffle/Logger.h:src/Logger.h])
-AC_CONFIG_LINKS([include/souffle/ParallelUtils.h:src/ParallelUtils.h])
-AC_CONFIG_LINKS([include/souffle/PiggyList.h:src/PiggyList.h])
-AC_CONFIG_LINKS([include/souffle/ProfileDatabase.h:src/ProfileDatabase.h])
-AC_CONFIG_LINKS([include/souffle/ProfileEvent.h:src/ProfileEvent.h])
-AC_CONFIG_LINKS([include/souffle/RamTypes.h:src/RamTypes.h])
-AC_CONFIG_LINKS([include/souffle/ReadStream.h:src/ReadStream.h])
-AC_CONFIG_LINKS([include/souffle/ReadStreamCSV.h:src/ReadStreamCSV.h])
-AC_CONFIG_LINKS([include/souffle/ReadStreamSQLite.h:src/ReadStreamSQLite.h])
-AC_CONFIG_LINKS([include/souffle/SignalHandler.h:src/SignalHandler.h])
-AC_CONFIG_LINKS([include/souffle/SouffleInterface.h:src/SouffleInterface.h])
-AC_CONFIG_LINKS([include/souffle/SymbolTable.h:src/SymbolTable.h])
-AC_CONFIG_LINKS([include/souffle/Table.h:src/Table.h])
-AC_CONFIG_LINKS([include/souffle/Brie.h:src/Brie.h])
-AC_CONFIG_LINKS([include/souffle/UnionFind.h:src/UnionFind.h])
-AC_CONFIG_LINKS([include/souffle/Util.h:src/Util.h])
-AC_CONFIG_LINKS([include/souffle/WriteStream.h:src/WriteStream.h])
-AC_CONFIG_LINKS([include/souffle/WriteStreamCSV.h:src/WriteStreamCSV.h])
-AC_CONFIG_LINKS([include/souffle/WriteStreamSQLite.h:src/WriteStreamSQLite.h])
-AC_CONFIG_LINKS([include/souffle/Mpi.h:src/Mpi.h])
-AC_CONFIG_LINKS([include/souffle/gzfstream.h:src/gzfstream.h])
-AC_CONFIG_LINKS([include/souffle/json11.h:src/json11.h])
-AC_CONFIG_LINKS([include/souffle/profile/Cell.h:src/profile/Cell.h])
-AC_CONFIG_LINKS([include/souffle/profile/CellInterface.h:src/profile/CellInterface.h])
-AC_CONFIG_LINKS([include/souffle/profile/Cli.h:src/profile/Cli.h])
-AC_CONFIG_LINKS([include/souffle/profile/DataComparator.h:src/profile/DataComparator.h])
-AC_CONFIG_LINKS([include/souffle/profile/Iteration.h:src/profile/Iteration.h])
-AC_CONFIG_LINKS([include/souffle/profile/OutputProcessor.h:src/profile/OutputProcessor.h])
-AC_CONFIG_LINKS([include/souffle/profile/ProgramRun.h:src/profile/ProgramRun.h])
-AC_CONFIG_LINKS([include/souffle/profile/Reader.h:src/profile/Reader.h])
-AC_CONFIG_LINKS([include/souffle/profile/Relation.h:src/profile/Relation.h])
-AC_CONFIG_LINKS([include/souffle/profile/Row.h:src/profile/Row.h])
-AC_CONFIG_LINKS([include/souffle/profile/Rule.h:src/profile/Rule.h])
-AC_CONFIG_LINKS([include/souffle/profile/StringUtils.h:src/profile/StringUtils.h])
-AC_CONFIG_LINKS([include/souffle/profile/Table.h:src/profile/Table.h])
-AC_CONFIG_LINKS([include/souffle/profile/Tui.h:src/profile/Tui.h])
-AC_CONFIG_LINKS([include/souffle/profile/UserInputReader.h:src/profile/UserInputReader.h])
-AC_CONFIG_LINKS([include/souffle/profile/HtmlGenerator.h:src/profile/HtmlGenerator.h])
-AC_CONFIG_LINKS([include/souffle/profile/htmlCssChartist.h:src/profile/htmlCssChartist.h])
-AC_CONFIG_LINKS([include/souffle/profile/htmlJsChartistMin.h:src/profile/htmlJsChartistMin.h])
-AC_CONFIG_LINKS([include/souffle/profile/htmlJsMain.h:src/profile/htmlJsMain.h])
-AC_CONFIG_LINKS([include/souffle/profile/htmlJsUtil.h:src/profile/htmlJsUtil.h])
-AC_CONFIG_LINKS([include/souffle/profile/htmlCssStyle.h:src/profile/htmlCssStyle.h])
-AC_CONFIG_LINKS([include/souffle/profile/htmlJsChartistPlugin.h:src/profile/htmlJsChartistPlugin.h])
-AC_CONFIG_LINKS([include/souffle/profile/htmlJsTableSort.h:src/profile/htmlJsTableSort.h])
-AC_CONFIG_LINKS([include/souffle/profile/htmlMain.h:src/profile/htmlMain.h])
 AC_CONFIG_LINKS([utilities/bash-completion/completions/souffle:debian/souffle.bash-completion])
 
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
@@ -338,32 +288,9 @@ AM_MISSING_PROG([AUTOM4TE], [autom4te])
 AC_FUNC_ALLOCA
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h float.h inttypes.h libintl.h limits.h malloc.h memory.h netdb.h stddef.h stdint.h stdlib.h string.h strings.h sys/time.h sys/timeb.h unistd.h wchar.h wctype.h])
 
-# Checks for typedefs, structures, and compiler characteristics.
-AC_C_INLINE
-AC_TYPE_INT16_T
-AC_TYPE_INT32_T
-AC_TYPE_INT64_T
-AC_TYPE_INT8_T
-AC_TYPE_PID_T
-AC_TYPE_SIZE_T
-AC_TYPE_UINT16_T
-AC_TYPE_UINT32_T
-AC_TYPE_UINT64_T
-AC_TYPE_UINT8_T
-AC_CHECK_TYPES([ptrdiff_t])
-
-# Checks for library functions.
-AC_FUNC_ERROR_AT_LINE
-AC_FUNC_FORK
-AC_FUNC_MALLOC
-AC_FUNC_MMAP
-AC_FUNC_REALLOC
-AC_FUNC_STRERROR_R
-AC_CHECK_FUNCS([dup2 fchdir getcwd getpagesize gettimeofday isascii memset mkdir munmap pow regcomp rmdir setenv socket strcasecmp strchr strdup strerror strrchr strstr strtol strtoull])
-
 SOUFFLE_CXXFLAGS="$CXXFLAGS"
 AC_SUBST(SOUFFLE_CXXFLAGS)
-CXXFLAGS="$CXXFLAGS $ENV_CXXFLAGS"
+CXXFLAGS="-Wall -Wextra $CXXFLAGS $ENV_CXXFLAGS"
 
 AC_OUTPUT(
   [ src/souffle-compile src/souffle-config debian/changelog ],

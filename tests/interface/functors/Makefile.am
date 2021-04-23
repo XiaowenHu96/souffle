@@ -4,6 +4,7 @@
 # - https://opensource.org/licenses/UPL
 # - <souffle root>/licenses/SOUFFLE-UPL.txt
 
-noinst_LTLIBRARIES = libfunctors.la
+check_LTLIBRARIES = libfunctors.la
 libfunctors_la_SOURCES = functors.cpp
-libfunctors_la_LDFLAGS = -version-info 0:0:0 
+libfunctors_la_LDFLAGS = -avoid-version -shared -rpath /tmp
+libfunctors_la_CPPFLAGS = -I$(top_srcdir)/src/include

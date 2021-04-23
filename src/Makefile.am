@@ -4,157 +4,419 @@
 # - https://opensource.org/licenses/UPL
 # - <souffle root>/licenses/SOUFFLE-UPL.txt
 
+SUBDIRS = . tests ast/tests ram/tests interpreter/tests
+
 SUFFIXES = .cpp .h .yy .ll .cc .hh .h
 
-bin_PROGRAMS = souffle souffle-profile souffle2bdd souffle2lb
-
-nodist_souffle_profile_SOURCES = $(BUILT_SOURCES)
-
-souffle_profile_sources = \
-                          ProfileDatabase.h                 \
-                          json11.h                          \
-                          profile/Cell.h                    \
-                          profile/CellInterface.h           \
-                          profile/Cli.h                     \
-                          profile/DataComparator.h          \
-                          profile/Iteration.h               \
-                          profile/OutputProcessor.h         \
-                          profile/ProgramRun.h              \
-                          profile/Reader.h                  \
-                          profile/Relation.h                \
-                          profile/Row.h                     \
-                          profile/Rule.h                    \
-                          profile/StringUtils.h             \
-                          profile/Table.h                   \
-                          profile/Tui.h                     \
-                          profile/UserInputReader.h         \
-                          profile/htmlCssChartist.h         \
-                          profile/htmlJsChartistMin.h       \
-                          profile/htmlJsMain.h              \
-                          profile/htmlJsUtil.h              \
-                          profile/htmlCssStyle.h            \
-                          profile/htmlJsChartistPlugin.h    \
-                          profile/htmlJsTableSort.h         \
-                          profile/htmlMain.h                \
-                          profile/HtmlGenerator.h
-
-DIR := ${CURDIR}
-
-# ... which should no go to distribution
-nodist_souffle_SOURCES = $(BUILT_SOURCES)
-
-if LIBZ
-libz_sources = gzfstream.h
-endif
-
-if SQLITE
-sqlite_sources = ReadStreamSQLite.h WriteStreamSQLite.h
-endif
-
-if MPI
-mpi_sources = Mpi.h
-endif
+bin_PROGRAMS = souffle souffle-profile
 
 souffle_sources = \
-              AstAnalysis.h                             \
-              AstArgument.cpp       AstArgument.h       \
-              AstAttribute.h                            \
-              AstClause.cpp         AstClause.h         \
-              AstComponent.h                            \
-              AstComponentChecker.cpp                   \
-              AstComponentChecker.h                     \
-              AstConstraintAnalysis.h                   \
-              AstFunctorDeclaration.h                   \
-              AstGroundAnalysis.cpp AstGroundAnalysis.h \
-              AstIO.h                                   \
-              AstIOTypeAnalysis.cpp AstIOTypeAnalysis.h \
-              AstLiteral.h                              \
-              AstNode.h                                 \
-              AstParserUtils.cpp    AstParserUtils.h    \
-              AstPragma.cpp         AstPragma.h         \
-              AstProgram.cpp        AstProgram.h        \
-              AstProfileUse.cpp     AstProfileUse.h     \
-              AstRelation.h                             \
-              AstRelationIdentifier.h                   \
-              AstSemanticChecker.cpp                    \
-              AstSemanticChecker.h                      \
-              AstTransformer.cpp    AstTransformer.h    \
-              AstTransforms.cpp     AstTransforms.h     \
-              AstTranslationUnit.h  ErrorReport.h       \
-              AstTranslator.cpp     AstTranslator.h     \
-              AstType.h                                 \
-              AstTypeAnalysis.cpp   AstTypeAnalysis.h   \
-              AstTypeEnvironmentAnalysis.cpp            \
-              AstTypeEnvironmentAnalysis.h              \
-              AstTypes.h                                \
-              AstUtils.cpp          AstUtils.h          \
-              AstVisitor.h                              \
-              BinaryConstraintOps.h                     \
-              ComponentModel.cpp    ComponentModel.h    \
-              Constraints.h                             \
-              DebugReport.cpp       DebugReport.h       \
-              EventProcessor.h                          \
-              FunctorOps.h                              \
-              Global.cpp            Global.h            \
-              GraphUtils.h                              \
-              IODirectives.h                            \
-              IOSystem.h                                \
-              IndexSetAnalysis.cpp   IndexSetAnalysis.h \
-              InlineRelationsTransformer.cpp            \
-              Interpreter.cpp       Interpreter.h       \
-              InterpreterContext.h                      \
-              InterpreterIndex.h                        \
-              InterpreterInterface.h                    \
-              InterpreterRecords.cpp InterpreterRecords.h \
-              InterpreterRelation.h                     \
-              LogStatement.h                            \
-			  LVMCode.cpp			LVMCode.h			\
-			  LVMGenerator.h							\
-              MagicSet.cpp          MagicSet.h          \
-              MinimiseProgramTransformer.cpp            \
-              ParserDriver.cpp      ParserDriver.h      \
-              PrecedenceGraph.cpp   PrecedenceGraph.h   \
-              ProfileEvent.h                            \
-              ProvenanceTransformer.cpp                 \
-              RamAnalysis.h                             \
-              RamConstValue.cpp RamConstValue.h         \
-              RamExistenceCheckAnalysis.cpp RamExistenceCheckAnalysis.h \
-              RamProvenanceExistenceCheckAnalysis.cpp RamProvenanceExistenceCheckAnalysis.h \
-              RamIndexScanKeys.cpp  RamIndexScanKeys.h  \
-              RamConditionLevel.cpp RamConditionLevel.h \
-              RamOperationDepth.cpp RamOperationDepth.h \
-              RamExpressionLevel.cpp RamExpressionLevel.h         \
-              RamCondition.h                            \
-              RamNode.h                                 \
-              RamOperation.cpp      RamOperation.h      \
-              RamProgram.h                              \
-              RamRelation.h                             \
-              RamStatement.h                            \
-              RamTransformer.cpp    RamTransformer.h    \
-              RamTransforms.cpp     RamTransforms.h     \
-              RamTranslationUnit.h                      \
-              RamExpression.h                           \
-              RamVisitor.h                              \
-              ReadStream.h                              \
-              ReadStreamCSV.h                           \
-              RelationRepresentation.h                  \
-              ReorderLiteralsTransformer.cpp            \
-              ResolveAliasesTransformer.cpp             \
-              SignalHandler.h                           \
-              SrcLocation.cpp    SrcLocation.h          \
-              StringPool.h                              \
-              Synthesiser.cpp       Synthesiser.h       \
-              SynthesiserRelation.cpp                   \
-              SynthesiserRelation.h                     \
-              TypeSystem.cpp        TypeSystem.h        \
-              WriteStream.h                             \
-              WriteStreamCSV.h                          \
-              parser.cc             parser.hh           \
-              scanner.cc            stack.hh            \
-              $(sqlite_sources)                         \
-              $(libz_sources)                           \
-              $(souffle_profile_sources)                \
-              $(mpi_sources)
+        AggregateOp.h                                      \
+        FunctorOps.cpp                                     \
+        FunctorOps.h                                       \
+        Global.cpp                                         \
+        Global.h                                           \
+        GraphUtils.h                                       \
+        LogStatement.h                                     \
+        RelationTag.h                                      \
+        ast/Aggregator.cpp                                 \
+        ast/Aggregator.h                                   \
+        ast/AlgebraicDataType.cpp                          \
+        ast/AlgebraicDataType.h                            \
+        ast/Argument.h                                     \
+        ast/Atom.cpp                                       \
+        ast/Atom.h                                         \
+        ast/Attribute.cpp                                  \
+        ast/Attribute.h                                    \
+        ast/BinaryConstraint.cpp                           \
+        ast/BinaryConstraint.h                             \
+        ast/BooleanConstraint.cpp                          \
+        ast/BooleanConstraint.h                            \
+        ast/BranchDeclaration.cpp                          \
+        ast/BranchDeclaration.h                            \
+        ast/BranchInit.cpp                                 \
+        ast/BranchInit.h                                   \
+        ast/Clause.cpp                                     \
+        ast/Clause.h                                       \
+        ast/Component.cpp                                  \
+        ast/Component.h                                    \
+        ast/ComponentInit.cpp                              \
+        ast/ComponentInit.h                                \
+        ast/ComponentType.cpp                              \
+        ast/ComponentType.h                                \
+        ast/Constant.cpp                                   \
+        ast/Constant.h                                     \
+        ast/Constraint.h                                   \
+        ast/Counter.cpp                                    \
+        ast/Counter.h                                      \
+        ast/Directive.cpp                                  \
+        ast/Directive.h                                    \
+        ast/ExecutionOrder.cpp                             \
+        ast/ExecutionOrder.h                               \
+        ast/ExecutionPlan.cpp                              \
+        ast/ExecutionPlan.h                                \
+        ast/Functor.h                                      \
+        ast/FunctorDeclaration.cpp                         \
+        ast/FunctorDeclaration.h                           \
+        ast/FunctionalConstraint.cpp                       \
+        ast/FunctionalConstraint.h                         \
+        ast/IntrinsicFunctor.cpp                           \
+        ast/IntrinsicFunctor.h                             \
+        ast/Literal.h                                      \
+        ast/Negation.cpp                                   \
+        ast/Negation.h                                     \
+        ast/NilConstant.cpp                                \
+        ast/NilConstant.h                                  \
+        ast/Node.h                                         \
+        ast/Node.cpp                                       \
+        ast/NumericConstant.cpp                            \
+        ast/NumericConstant.h                              \
+        ast/Pragma.cpp                                     \
+        ast/Pragma.h                                       \
+        ast/Program.cpp                                    \
+        ast/Program.h                                      \
+        ast/QualifiedName.cpp                              \
+        ast/QualifiedName.h                                \
+        ast/RecordInit.cpp                                 \
+        ast/RecordInit.h                                   \
+        ast/RecordType.cpp                                 \
+        ast/RecordType.h                                   \
+        ast/Relation.cpp                                   \
+        ast/Relation.h                                     \
+        ast/StringConstant.cpp                             \
+        ast/StringConstant.h                               \
+        ast/SubsetType.cpp                                 \
+        ast/SubsetType.h                                   \
+        ast/Term.cpp                                       \
+        ast/Term.h                                         \
+        ast/TranslationUnit.cpp                            \
+        ast/TranslationUnit.h                              \
+        ast/Type.cpp                                       \
+        ast/Type.h                                         \
+        ast/TypeCast.cpp                                   \
+        ast/TypeCast.h                                     \
+        ast/UnionType.cpp                                  \
+        ast/UnionType.h                                    \
+        ast/UnnamedVariable.cpp                            \
+        ast/UnnamedVariable.h                              \
+        ast/UserDefinedFunctor.cpp                         \
+        ast/UserDefinedFunctor.h                           \
+        ast/Variable.cpp                                   \
+        ast/Variable.h                                     \
+        ast/analysis/Aggregate.cpp                         \
+        ast/analysis/Aggregate.h                           \
+        ast/analysis/Analysis.h                            \
+        ast/analysis/ClauseNormalisation.h                 \
+        ast/analysis/ClauseNormalisation.cpp               \
+        ast/analysis/ComponentLookup.cpp                   \
+        ast/analysis/ComponentLookup.h                     \
+        ast/analysis/Constraint.h                          \
+        ast/analysis/ConstraintSystem.h                    \
+        ast/analysis/Functor.h                             \
+        ast/analysis/Functor.cpp                           \
+        ast/analysis/Ground.cpp                            \
+        ast/analysis/Ground.h                              \
+        ast/analysis/IOType.cpp                            \
+        ast/analysis/IOType.h                              \
+        ast/analysis/PolymorphicObjects.cpp                \
+        ast/analysis/PolymorphicObjects.h                  \
+        ast/analysis/PrecedenceGraph.cpp                   \
+        ast/analysis/PrecedenceGraph.h                     \
+        ast/analysis/ProfileUse.cpp                        \
+        ast/analysis/ProfileUse.h                          \
+        ast/analysis/RecursiveClauses.cpp                  \
+        ast/analysis/RecursiveClauses.h                    \
+        ast/analysis/RedundantRelations.cpp                \
+        ast/analysis/RedundantRelations.h                  \
+        ast/analysis/RelationDetailCache.cpp               \
+        ast/analysis/RelationDetailCache.h                 \
+        ast/analysis/RelationSchedule.cpp                  \
+        ast/analysis/RelationSchedule.h                    \
+        ast/analysis/SCCGraph.cpp                          \
+        ast/analysis/SCCGraph.h                            \
+        ast/analysis/SumTypeBranches.cpp                   \
+        ast/analysis/SumTypeBranches.h                     \
+        ast/analysis/TopologicallySortedSCCGraph.cpp       \
+        ast/analysis/TopologicallySortedSCCGraph.h         \
+        ast/analysis/Type.cpp                              \
+        ast/analysis/Type.h                                \
+        ast/analysis/TypeConstraints.h                     \
+        ast/analysis/TypeConstraints.cpp                   \
+        ast/analysis/TypeSystem.cpp                        \
+        ast/analysis/TypeSystem.h                          \
+        ast/analysis/TypeEnvironment.cpp                   \
+        ast/analysis/TypeEnvironment.h                     \
+        ast/transform/AddNullariesToAtomlessAggregates.cpp \
+        ast/transform/AddNullariesToAtomlessAggregates.h   \
+        ast/transform/ComponentChecker.cpp                 \
+        ast/transform/ComponentChecker.h                   \
+        ast/transform/ComponentInstantiation.cpp           \
+        ast/transform/ComponentInstantiation.h             \
+        ast/transform/Conditional.h                        \
+        ast/transform/DebugReporter.cpp                    \
+        ast/transform/DebugReporter.h                      \
+        ast/transform/ExecutionPlanChecker.cpp             \
+        ast/transform/ExecutionPlanChecker.h               \
+        ast/transform/ExpandEqrels.cpp                     \
+        ast/transform/ExpandEqrels.h                       \
+        ast/transform/Fixpoint.h                           \
+        ast/transform/FoldAnonymousRecords.cpp             \
+        ast/transform/FoldAnonymousRecords.h               \
+        ast/transform/GroundedTermsChecker.cpp             \
+        ast/transform/GroundedTermsChecker.h               \
+        ast/transform/GroundWitnesses.cpp                  \
+        ast/transform/GroundWitnesses.h                    \
+        ast/transform/IOAttributes.h                       \
+        ast/transform/IODefaults.h                         \
+        ast/transform/InlineRelations.cpp                  \
+        ast/transform/InlineRelations.h                    \
+        ast/transform/MagicSet.cpp                         \
+        ast/transform/MagicSet.h                           \
+        ast/transform/MaterializeAggregationQueries.cpp    \
+        ast/transform/MaterializeAggregationQueries.h      \
+        ast/transform/MaterializeSingletonAggregation.cpp  \
+        ast/transform/MaterializeSingletonAggregation.h    \
+        ast/transform/Meta.cpp                             \
+        ast/transform/Meta.h                               \
+        ast/transform/MinimiseProgram.cpp                  \
+        ast/transform/MinimiseProgram.h                    \
+        ast/transform/NameUnnamedVariables.cpp             \
+        ast/transform/NameUnnamedVariables.h               \
+        ast/transform/NormaliseGenerators.cpp              \
+        ast/transform/NormaliseGenerators.h                \
+        ast/transform/Null.h                               \
+        ast/transform/PartitionBodyLiterals.cpp            \
+        ast/transform/PartitionBodyLiterals.h              \
+        ast/transform/Pipeline.h                           \
+        ast/transform/PragmaChecker.cpp                    \
+        ast/transform/PragmaChecker.h                      \
+        ast/transform/ReduceExistentials.cpp               \
+        ast/transform/ReduceExistentials.h                 \
+        ast/transform/RemoveBooleanConstraints.cpp         \
+        ast/transform/RemoveBooleanConstraints.h           \
+        ast/transform/RemoveEmptyRelations.cpp             \
+        ast/transform/RemoveEmptyRelations.h               \
+        ast/transform/RemoveRedundantRelations.cpp         \
+        ast/transform/RemoveRedundantRelations.h           \
+        ast/transform/RemoveRedundantSums.cpp              \
+        ast/transform/RemoveRedundantSums.h                \
+        ast/transform/RemoveRelationCopies.cpp             \
+        ast/transform/RemoveRelationCopies.h               \
+        ast/transform/ReorderLiterals.cpp                  \
+        ast/transform/ReorderLiterals.h                    \
+        ast/transform/ReplaceSingletonVariables.cpp        \
+        ast/transform/ReplaceSingletonVariables.h          \
+        ast/transform/ResolveAliases.cpp                   \
+        ast/transform/ResolveAliases.h                     \
+        ast/transform/ResolveAnonymousRecordAliases.cpp    \
+        ast/transform/ResolveAnonymousRecordAliases.h      \
+        ast/transform/SemanticChecker.cpp                  \
+        ast/transform/SemanticChecker.h                    \
+        ast/transform/SimplifyAggregateTargetExpression.cpp\
+        ast/transform/SimplifyAggregateTargetExpression.h  \
+        ast/transform/Transformer.cpp                      \
+        ast/transform/Transformer.h                        \
+        ast/transform/TypeChecker.cpp                      \
+        ast/transform/TypeChecker.h                        \
+        ast/transform/UniqueAggregationVariables.cpp       \
+        ast/transform/UniqueAggregationVariables.h         \
+        ast/transform/While.h                              \
+        ast/utility/BindingStore.h                         \
+        ast/utility/BindingStore.cpp                       \
+        ast/utility/LambdaNodeMapper.h                     \
+        ast/utility/NodeMapper.h                           \
+        ast/utility/SipsMetric.h                           \
+        ast/utility/SipsMetric.cpp                         \
+        ast/utility/Utils.cpp                              \
+        ast/utility/Utils.h                                \
+        ast/utility/Visitor.h                              \
+        ast2ram/ClauseTranslator.h                         \
+        ast2ram/ConstraintTranslator.h                     \
+        ast2ram/TranslationStrategy.h                      \
+        ast2ram/UnitTranslator.h                           \
+        ast2ram/ValueTranslator.h                          \
+        ast2ram/provenance/ClauseTranslator.cpp            \
+        ast2ram/provenance/ClauseTranslator.h              \
+        ast2ram/provenance/ConstraintTranslator.cpp        \
+        ast2ram/provenance/ConstraintTranslator.h          \
+        ast2ram/provenance/SubproofGenerator.cpp           \
+        ast2ram/provenance/SubproofGenerator.h             \
+        ast2ram/provenance/TranslationStrategy.cpp         \
+        ast2ram/provenance/TranslationStrategy.h           \
+        ast2ram/provenance/UnitTranslator.cpp              \
+        ast2ram/provenance/UnitTranslator.h                \
+        ast2ram/seminaive/ClauseTranslator.cpp             \
+        ast2ram/seminaive/ClauseTranslator.h               \
+        ast2ram/seminaive/ConstraintTranslator.cpp         \
+        ast2ram/seminaive/ConstraintTranslator.h           \
+        ast2ram/seminaive/TranslationStrategy.cpp          \
+        ast2ram/seminaive/TranslationStrategy.h            \
+        ast2ram/seminaive/UnitTranslator.cpp               \
+        ast2ram/seminaive/UnitTranslator.h                 \
+        ast2ram/seminaive/ValueTranslator.cpp              \
+        ast2ram/seminaive/ValueTranslator.h                \
+        ast2ram/utility/Location.h                         \
+        ast2ram/utility/Utils.cpp                          \
+        ast2ram/utility/Utils.h                            \
+        ast2ram/utility/TranslatorContext.cpp              \
+        ast2ram/utility/TranslatorContext.h                \
+        ast2ram/utility/ValueIndex.cpp                     \
+        ast2ram/utility/ValueIndex.h                       \
+        interpreter/Context.h                              \
+        interpreter/Engine.cpp                             \
+        interpreter/Engine.h                               \
+        interpreter/Generator.h                            \
+        interpreter/Generator.cpp                          \
+        interpreter/BrieIndex.cpp                          \
+        interpreter/BTreeIndex.cpp                         \
+        interpreter/EqrelIndex.cpp                         \
+        interpreter/ProvenanceIndex.cpp                    \
+        interpreter/Index.h                                \
+        interpreter/Node.h                                 \
+        interpreter/ViewContext.h                          \
+        interpreter/ProgInterface.h                        \
+        interpreter/Relation.h                             \
+        interpreter/Util.h                                 \
+        parser/ParserDriver.cpp                            \
+        parser/ParserDriver.h                              \
+        parser/ParserUtils.cpp                             \
+        parser/ParserUtils.h                               \
+        parser/SrcLocation.cpp                             \
+        parser/SrcLocation.h                               \
+        parser/parser.cc                                   \
+        parser/parser.hh                                   \
+        parser/scanner.cc                                  \
+        parser/stack.hh                                    \
+        ram/AbstractAggregate.h                            \
+        ram/AbstractConditional.h                          \
+        ram/AbstractExistenceCheck.h                       \
+        ram/AbstractIfExists.h                             \
+        ram/AbstractLog.h                                  \
+        ram/AbstractOperator.h                             \
+        ram/AbstractParallel.h                             \
+        ram/Aggregate.h                                    \
+        ram/AutoIncrement.h                                \
+        ram/BinRelationStatement.h                         \
+        ram/Break.h                                        \
+        ram/Call.h                                         \
+        ram/Clear.h                                        \
+        ram/Condition.h                                    \
+        ram/Conjunction.h                                  \
+        ram/Constraint.h                                   \
+        ram/DebugInfo.h                                    \
+        ram/EmptinessCheck.h                               \
+        ram/ExistenceCheck.h                               \
+        ram/Exit.h                                         \
+        ram/Expression.h                                   \
+        ram/Extend.h                                       \
+        ram/False.h                                        \
+        ram/Filter.h                                       \
+        ram/FloatConstant.h                                \
+        ram/GuardedInsert.h                                \
+        ram/IfExists.h                                     \
+        ram/IO.h                                           \
+        ram/IndexAggregate.h                               \
+        ram/IndexIfExists.h                                \
+        ram/IndexOperation.h                               \
+        ram/IndexScan.h                                    \
+        ram/Insert.h                                       \
+        ram/IntrinsicOperator.h                            \
+        ram/ListStatement.h                                \
+        ram/LogRelationTimer.h                             \
+        ram/LogSize.h                                      \
+        ram/LogTimer.h                                     \
+        ram/Loop.h                                         \
+        ram/Negation.h                                     \
+        ram/NestedIntrinsicOperator.h                      \
+        ram/NestedOperation.h                              \
+        ram/Node.h                                         \
+        ram/NumericConstant.h                              \
+        ram/Operation.h                                    \
+        ram/PackRecord.h                                   \
+        ram/Parallel.h                                     \
+        ram/ParallelAggregate.h                            \
+        ram/ParallelIfExists.h                             \
+        ram/ParallelIndexAggregate.h                       \
+        ram/ParallelIndexIfExists.h                        \
+        ram/ParallelIndexScan.h                            \
+        ram/Program.h                                      \
+        ram/ProvenanceExistenceCheck.h                     \
+        ram/Query.h                                        \
+        ram/Relation.h                                     \
+        ram/RelationOperation.h                            \
+        ram/RelationStatement.h                            \
+        ram/RelationSize.h                                 \
+        ram/ParallelScan.h                                 \
+        ram/Scan.h                                         \
+        ram/Sequence.h                                     \
+        ram/SignedConstant.h                               \
+        ram/Statement.h                                    \
+        ram/Statement.h                                    \
+        ram/StringConstant.h                               \
+        ram/SubroutineArgument.h                           \
+        ram/SubroutineReturn.h                             \
+        ram/Swap.h                                         \
+        ram/TranslationUnit.h                              \
+        ram/True.h                                         \
+        ram/TupleElement.h                                 \
+        ram/TupleOperation.h                               \
+        ram/UndefValue.h                                   \
+        ram/UnpackRecord.h                                 \
+        ram/UnsignedConstant.h                             \
+        ram/UserDefinedOperator.h                          \
+        ram/analysis/Analysis.h                            \
+        ram/analysis/Complexity.cpp                        \
+        ram/analysis/Complexity.h                          \
+        ram/analysis/Index.cpp                             \
+        ram/analysis/Index.h                               \
+        ram/analysis/Level.cpp                             \
+        ram/analysis/Level.h                               \
+        ram/analysis/Relation.cpp                          \
+        ram/analysis/Relation.h                            \
+        ram/transform/CollapseFilters.cpp                  \
+        ram/transform/CollapseFilters.h                    \
+        ram/transform/Conditional.h                        \
+        ram/transform/EliminateDuplicates.cpp              \
+        ram/transform/EliminateDuplicates.h                \
+        ram/transform/ExpandFilter.cpp                     \
+        ram/transform/ExpandFilter.h                       \
+        ram/transform/IfExistsConversion.cpp               \
+        ram/transform/IfExistsConversion.h                 \
+        ram/transform/HoistAggregate.cpp                   \
+        ram/transform/HoistAggregate.h                     \
+        ram/transform/HoistConditions.cpp                  \
+        ram/transform/HoistConditions.h                    \
+        ram/transform/IfConversion.cpp                     \
+        ram/transform/IfConversion.h                       \
+        ram/transform/Loop.h                               \
+        ram/transform/MakeIndex.cpp                        \
+        ram/transform/MakeIndex.h                          \
+        ram/transform/Meta.h                               \
+        ram/transform/Parallel.cpp                         \
+        ram/transform/Parallel.h                           \
+        ram/transform/ReorderConditions.cpp                \
+        ram/transform/ReorderConditions.h                  \
+        ram/transform/ReorderFilterBreak.cpp               \
+        ram/transform/ReorderFilterBreak.h                 \
+        ram/transform/ReportIndex.h                        \
+        ram/transform/Sequence.h                           \
+        ram/transform/Transformer.cpp                      \
+        ram/transform/Transformer.h                        \
+        ram/transform/TupleId.cpp                          \
+        ram/transform/TupleId.h                            \
+        ram/utility/LambdaNodeMapper.h                     \
+        ram/utility/NodeMapper.h                           \
+        ram/utility/Utils.h                                \
+        ram/utility/Visitor.h                              \
+        reports/DebugReport.cpp                            \
+        reports/DebugReport.h                              \
+        reports/ErrorReport.h                              \
+        synthesiser/Synthesiser.cpp                        \
+        synthesiser/Synthesiser.h                          \
+        synthesiser/Relation.cpp                           \
+        synthesiser/Relation.h                             \
+        $(souffle_utility_sources)                         \
+        $(souffle_profile_sources)
 
 # -- build souffle as a library so it can be reused in testing
 noinst_LTLIBRARIES = libsouffle.la
@@ -164,213 +426,130 @@ libsouffle_la_LDFLAGS = --static --dlopen --pic -ldl -lffi
 
 souffle_SOURCES = main.cpp
 souffle_LDADD = libsouffle.la
+souffle_CPPFLAGS = -I$(srcdir)/include
 
 souffle_profile_SOURCES = souffle_prof.cpp
-souffle_profile_CXXFLAGS = $(souffle_CPPFLAGS) -DMAKEDIR='"$(DIR)"'
-
-souffle2bdd_SOURCES = souffle2bdd.cpp
-souffle2bdd_LDADD = libsouffle.la
-
-souffle2lb_SOURCES = souffle2lb.cpp
-souffle2lb_LDADD = libsouffle.la
+souffle_profile_CPPFLAGS = $(souffle_CPPFLAGS)
 
 dist_bin_SCRIPTS = souffle-compile souffle-config
 
-EXTRA_DIST = parser.yy scanner.ll  test/test.h
+EXTRA_DIST = parser/parser.yy parser/scanner.ll
 
 soufflepublicdir = $(includedir)/souffle
 
 soufflepublic_HEADERS = \
-						CompiledOptions.h       \
-						BinaryConstraintOps.h   \
-                        Brie.h                  \
-                        BTree.h                 \
-                        CompiledIndexUtils.h    \
-                        CompiledRecord.h        \
-                        CompiledRelation.h      \
-                        CompiledSouffle.h       \
-                        CompiledTuple.h         \
-                        EventProcessor.h        \
-                        Explain.h               \
-                        ExplainProvenance.h     \
-                        ExplainProvenanceSLD.h  \
-                        ExplainTree.h           \
-                        EquivalenceRelation.h 	\
-                        IODirectives.h          \
-                        IOSystem.h              \
-                        IterUtils.h             \
-                        LambdaBTree.h           \
-                        Logger.h                \
-                        ParallelUtils.h         \
-                        PiggyList.h             \
-                        ProfileDatabase.h       \
-                        ProfileEvent.h          \
-                        RamTypes.h              \
-                        ReadStream.h            \
-                        ReadStreamCSV.h         \
-                        SignalHandler.h         \
-                        SouffleInterface.h      \
-                        SymbolTable.h           \
-                        Table.h                 \
-                        UnionFind.h             \
-                        Util.h                  \
-                        WriteStream.h           \
-                        WriteStreamCSV.h        \
-                        json11.h                \
-                        $(libz_sources)         \
-                        $(sqlite_sources)       \
-                        $(mpi_sources)
+        include/souffle/BinaryConstraintOps.h              \
+        include/souffle/CompiledOptions.h                  \
+        include/souffle/CompiledSouffle.h                  \
+        include/souffle/RamTypes.h                         \
+        include/souffle/RecordTable.h                      \
+        include/souffle/SignalHandler.h                    \
+        include/souffle/SouffleInterface.h                 \
+        include/souffle/SymbolTable.h                      \
+        include/souffle/TypeAttribute.h                    \
+        include/souffle/Visitor.h
+
+souffledatastructuredir = $(soufflepublicdir)/datastructure
+
+souffledatastructure_HEADERS = \
+        include/souffle/datastructure/BTree.h              \
+        include/souffle/datastructure/Brie.h               \
+        include/souffle/datastructure/EquivalenceRelation.h\
+        include/souffle/datastructure/LambdaBTree.h        \
+        include/souffle/datastructure/PiggyList.h          \
+        include/souffle/datastructure/Table.h              \
+        include/souffle/datastructure/UnionFind.h
+
+souffleiodir = $(soufflepublicdir)/io
+
+souffleio_HEADERS = \
+        include/souffle/io/IOSystem.h                      \
+        include/souffle/io/gzfstream.h                     \
+        include/souffle/io/ReadStream.h                    \
+        include/souffle/io/ReadStreamCSV.h                 \
+        include/souffle/io/ReadStreamJSON.h                \
+        include/souffle/io/ReadStreamSQLite.h              \
+        include/souffle/io/SerialisationStream.h           \
+        include/souffle/io/WriteStreamSQLite.h             \
+        include/souffle/io/WriteStream.h                   \
+        include/souffle/io/WriteStreamCSV.h                \
+        include/souffle/io/WriteStreamJSON.h
 
 souffleprofiledir = $(soufflepublicdir)/profile
 
-souffleprofile_HEADERS = $(souffle_profile_sources)
+souffleprofile_HEADERS = \
+        include/souffle/profile/Cell.h                     \
+        include/souffle/profile/CellInterface.h            \
+        include/souffle/profile/Cli.h                      \
+        include/souffle/profile/DataComparator.h           \
+        include/souffle/profile/EventProcessor.h           \
+        include/souffle/profile/HtmlGenerator.h            \
+        include/souffle/profile/Iteration.h                \
+        include/souffle/profile/Logger.h                   \
+        include/souffle/profile/OutputProcessor.h          \
+        include/souffle/profile/ProfileDatabase.h          \
+        include/souffle/profile/ProfileEvent.h             \
+        include/souffle/profile/ProgramRun.h               \
+        include/souffle/profile/Reader.h                   \
+        include/souffle/profile/Relation.h                 \
+        include/souffle/profile/Row.h                      \
+        include/souffle/profile/Rule.h                     \
+        include/souffle/profile/StringUtils.h              \
+        include/souffle/profile/Table.h                    \
+        include/souffle/profile/Tui.h                      \
+        include/souffle/profile/UserInputReader.h          \
+        include/souffle/profile/htmlCssChartist.h          \
+        include/souffle/profile/htmlCssStyle.h             \
+        include/souffle/profile/htmlJsChartistMin.h        \
+        include/souffle/profile/htmlJsChartistPlugin.h     \
+        include/souffle/profile/htmlJsMain.h               \
+        include/souffle/profile/htmlJsTableSort.h          \
+        include/souffle/profile/htmlJsUtil.h               \
+        include/souffle/profile/htmlMain.h
+
+souffleprovenancedir = $(soufflepublicdir)/provenance
+
+souffleprovenance_HEADERS = \
+        include/souffle/provenance/Explain.h               \
+        include/souffle/provenance/ExplainProvenance.h     \
+        include/souffle/provenance/ExplainProvenanceImpl.h \
+        include/souffle/provenance/ExplainTree.h
+
+souffleswigdir = $(soufflepublicdir)/swig
+
+souffleswig_HEADERS = \
+        include/souffle/swig/SwigInterface.h               \
+        include/souffle/swig/SwigInterface.i
+
+souffleutilitydir = $(soufflepublicdir)/utility
+
+souffleutility_HEADERS = \
+        include/souffle/utility/CacheUtil.h                \
+        include/souffle/utility/ContainerUtil.h            \
+        include/souffle/utility/FileUtil.h                 \
+        include/souffle/utility/EvaluatorUtil.h            \
+        include/souffle/utility/FunctionalUtil.h           \
+        include/souffle/utility/Iteration.h                \
+        include/souffle/utility/MiscUtil.h                 \
+        include/souffle/utility/ParallelUtil.h             \
+        include/souffle/utility/StreamUtil.h               \
+        include/souffle/utility/StringUtil.h               \
+        include/souffle/utility/Types.h                    \
+        include/souffle/utility/json11.h                   \
+        include/souffle/utility/span.h                     \
+        include/souffle/utility/tinyformat.h
 
 # files to clean
-CLEANFILES = $(BUILT_SOURCES)  parser.cc scanner.cc parser.hh stack.hh
+CLEANFILES = $(BUILT_SOURCES)  parser/parser.cc parser/scanner.cc parser/parser.hh parser/stack.hh
 
 # run Bison
-$(builddir)/parser.hh: $(srcdir)/parser.yy
-	$(BISON) -Wall -Werror -Wno-error=deprecated -Wno-error=other -v -d -o parser.cc $(srcdir)/parser.yy
+$(builddir)/parser/parser.hh: $(srcdir)/parser/parser.yy
+	$(BISON) -Wall -Werror -Wno-error=deprecated -Wno-error=other -v -d -o parser/parser.cc $(srcdir)/parser/parser.yy
 
 # and FLEX
-$(builddir)/scanner.cc: $(srcdir)/scanner.ll
-	$(FLEX) -o scanner.cc $(srcdir)/scanner.ll
+$(builddir)/parser/scanner.cc: $(srcdir)/parser/scanner.ll
+	$(FLEX) -o parser/scanner.cc $(srcdir)/parser/scanner.ll
 
 # driver depends on the generated header
-$(builddir)/parser.cc $(builddir)/stack.hh $(builddir)/scanner.cc \
-    $(builddir)/souffle2bdd.cpp $(builddir)/souffle2lb.cpp \
-    $(builddir)/main.cpp $(builddir)/ParserDriver.cpp: $(builddir)/parser.hh
-
-########## Unit Tests
-
-AM_COLOR_TESTS=always
-
-# -------------------------
-
-# init check programs
-check_PROGRAMS =
-
-# utils test
-check_PROGRAMS += test/util_test
-test_util_test_CXXFLAGS = $(souffle_CPPFLAGS) -I @abs_top_srcdir@/src/test
-test_util_test_SOURCES = test/util_test.cpp
-test_util_test_LDADD = libsouffle.la
-
-# matching test
-check_PROGRAMS += test/matching_test
-test_matching_test_CXXFLAGS = $(souffle_CPPFLAGS) -I @abs_top_srcdir@/src/test
-test_matching_test_SOURCES = test/matching_test.cpp
-test_matching_test_LDADD = libsouffle.la
-
-# table test
-check_PROGRAMS += test/table_test
-test_table_test_CXXFLAGS = $(souffle_CPPFLAGS) -I @abs_top_srcdir@/src/test
-test_table_test_SOURCES = test/table_test.cpp
-test_table_test_LDADD = libsouffle.la
-
-# b-tree set test
-check_PROGRAMS += test/btree_set_test
-test_btree_set_test_CXXFLAGS = $(souffle_CPPFLAGS) -I @abs_top_srcdir@/src/test
-test_btree_set_test_SOURCES = test/btree_set_test.cpp
-test_btree_set_test_LDADD = libsouffle.la
-
-# b-tree multi-set test
-check_PROGRAMS += test/btree_multiset_test
-test_btree_multiset_test_CXXFLAGS = $(souffle_CPPFLAGS) -I @abs_top_srcdir@/src/test
-test_btree_multiset_test_SOURCES = test/btree_multiset_test.cpp
-test_btree_multiset_test_LDADD = libsouffle.la
-
-# binary relation tests
-check_PROGRAMS += test/binary_relation_test
-test_binary_relation_test_CXXFLAGS = $(souffle_CPPFLAGS) -I @abs_top_srcdir@/src/test
-test_binary_relation_test_SOURCES = test/binary_relation_test.cpp
-test_binary_relation_test_LDADD = libsouffle.la
-
-# pnappa's good ol fashioned data structure tests (auxilliary structures to binrel, and potentially useful outside)
-check_PROGRAMS += test/eqrel_datastructure_test
-test_eqrel_datastructure_test_CXXFLAGS = $(souffle_CPPFLAGS) -I @abs_top_srcdir@/src/test
-test_eqrel_datastructure_test_SOURCES = test/eqrel_datastructure_test.cpp
-test_eqrel_datastructure_test_LDADD = libsouffle.la
-
-# compiled ram tuple test
-check_PROGRAMS += test/compiled_tuple_test
-test_compiled_tuple_test_CXXFLAGS = $(souffle_CPPFLAGS) -I @abs_top_srcdir@/src/test
-test_compiled_tuple_test_SOURCES = test/compiled_tuple_test.cpp
-test_compiled_tuple_test_LDADD = libsouffle.la
-
-# compiled ram index utils test
-check_PROGRAMS += test/compiled_index_utils_test
-test_compiled_index_utils_test_CXXFLAGS = $(souffle_CPPFLAGS) -I @abs_top_srcdir@/src/test
-test_compiled_index_utils_test_SOURCES = test/compiled_index_utils_test.cpp
-test_compiled_index_utils_test_LDADD = libsouffle.la
-
-# compiled ram relation test
-check_PROGRAMS += test/compiled_relation_test
-test_compiled_relation_test_CXXFLAGS = $(souffle_CPPFLAGS) -I @abs_top_srcdir@/src/test
-test_compiled_relation_test_SOURCES = test/compiled_relation_test.cpp
-test_compiled_relation_test_LDADD = libsouffle.la
-
-# type system test
-check_PROGRAMS += test/type_system_test
-test_type_system_test_CXXFLAGS = $(souffle_CPPFLAGS) -I @abs_top_srcdir@/src/test
-test_type_system_test_SOURCES = test/type_system_test.cpp
-test_type_system_test_LDADD = libsouffle.la
-
-# constraints test
-check_PROGRAMS += test/constraints_test
-test_constraints_test_CXXFLAGS = $(souffle_CPPFLAGS) -I @abs_top_srcdir@/src/test
-test_constraints_test_SOURCES = test/constraints_test.cpp
-test_constraints_test_LDADD = libsouffle.la
-
-# ast program test
-check_PROGRAMS += test/ast_program_test
-test_ast_program_test_CXXFLAGS = $(souffle_CPPFLAGS) -I @abs_top_srcdir@/src/test
-test_ast_program_test_SOURCES = test/ast_program_test.cpp
-test_ast_program_test_LDADD = libsouffle.la
-
-# ast utils test
-check_PROGRAMS += test/ast_utils_test
-test_ast_utils_test_CXXFLAGS = $(souffle_CPPFLAGS) -I @abs_top_srcdir@/src/test
-test_ast_utils_test_SOURCES = test/ast_utils_test.cpp
-test_ast_utils_test_LDADD = libsouffle.la
-
-# ast parser utils test
-check_PROGRAMS += test/ast_parser_utils_test
-test_ast_parser_utils_test_CXXFLAGS = $(souffle_CPPFLAGS) -I @abs_top_srcdir@/src/test
-test_ast_parser_utils_test_SOURCES = test/ast_parser_utils_test.cpp
-test_ast_parser_utils_test_LDADD = libsouffle.la
-
-# symbol table
-check_PROGRAMS += test/symbol_table_test
-test_symbol_table_test_CXXFLAGS = $(souffle_bin_CPPFLAGS) -I @abs_top_srcdir@/src/test -DBUILDDIR='"@abs_top_builddir@/src/"'
-test_symbol_table_test_SOURCES = test/symbol_table_test.cpp
-test_symbol_table_test_LDADD = libsouffle.la
-
-# graph utils
-check_PROGRAMS += test/graph_utils_test
-test_graph_utils_test_CXXFLAGS = $(souffle_bin_CPPFLAGS) -I @abs_top_srcdir@/src/test -DBUILDDIR='"@abs_top_builddir@/src/"'
-test_graph_utils_test_SOURCES = test/graph_utils_test.cpp
-test_graph_utils_test_LDADD = libsouffle.la
-
-# trie implementation
-check_PROGRAMS += test/brie_test
-test_brie_test_CXXFLAGS = $(souffle_bin_CPPFLAGS) -I @abs_top_srcdir@/src/test -DBUILDDIR='"@abs_top_builddir@/src/"'
-test_brie_test_SOURCES = test/brie_test.cpp
-test_brie_test_LDADD = libsouffle.la
-
-# parallel utils implementation
-check_PROGRAMS += test/parallel_utils_test
-test_parallel_utils_test_CXXFLAGS = $(souffle_bin_CPPFLAGS) -I @abs_top_srcdir@/src/test -DBUILDDIR='"@abs_top_builddir@/src/"'
-test_parallel_utils_test_SOURCES = test/parallel_utils_test.cpp
-test_parallel_utils_test_LDADD = libsouffle.la
-
-if MPI
-# mpi interface
-check_PROGRAMS += test/mpi_test
-test_mpi_test_CXXFLAGS = $(souffle_bin_CPPFLAGS) -I @abs_top_srcdir@/src/test -DBUILDDIR='"@abs_top_builddir@/src/"'
-test_mpi_test_SOURCES = test/mpi_test.cpp
-test_mpi_test_LDADD = libsouffle.la
-endif
-
-# make all check-programs tests
-TESTS = $(check_PROGRAMS)
+$(builddir)/parser/parser.cc $(builddir)/parser/stack.hh $(builddir)/parser/scanner.cc \
+    $(builddir)/main.cpp $(builddir)/parser/ParserDriver.cpp: $(builddir)/parser/parser.hh

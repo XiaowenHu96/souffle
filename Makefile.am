@@ -56,7 +56,6 @@ package:
 			--identifier com.oracle.souffle \
 			--version $(VERSION) \
 			--install-location /usr/local \
-			--scripts $(abs_top_srcdir)/osx \
 			$(abs_top_builddir)/$(distdir).pkg \
 		&& popd \
 		&& rm -rf $(distdir)
@@ -70,3 +69,45 @@ completions_DATA=utilities/bash-completion/completions/souffle
 
 # Man pages
 dist_man1_MANS = $(wildcard $(srcdir)/man/*.1)
+
+#Linting
+lint: format tidy
+
+# Run clang-format on all modified cpp/h files
+format:
+	cd $(abs_top_srcdir); \
+	cpplist='`git diff --diff-filter=dr --name-only *.cpp *.h` `git diff --diff-filter=dr --name-only *.cpp *.h`'; \
+	for file in $$cpplist; \
+	do \
+		clang-format -i $$file; \
+	done;
+
+# Run clang-tidy on all modified cpp files
+tidy:
+	cd $(abs_top_srcdir); \
+	cpplist="`git diff --cached --diff-filter=dr --name-only *cpp` `git diff --diff-filter=dr --name-only *cpp`"; \
+	cd $(abs_top_builddir)/src; \
+	for file in $$cpplist; \
+	do \
+		clang-tidy $(abs_top_srcdir)/$$file --quiet --extra-arg=-std=c++17 -- -I$(abs_top_builddir)/src -I. -I$(abs_top_srcdir)/src -I$(abs_top_builddir)/include -I$(abs_top_builddir) $(CXXFLAGS) ;\
+	done;
+
+# Run clang-format on all cpp/h files known to git
+format-all:
+	cd $(abs_top_srcdir); \
+	cpplist=`git ls-files *.cpp *.h`; \
+	for file in $$cpplist; \
+	do \
+		clang-format -i $$file; \
+	done;
+
+# Run clang-tidy on all cpp files known to git
+tidy-all:
+	cd $(abs_top_srcdir); \
+	cpplist=`git ls-files *.cpp`; \
+	cd $(abs_top_builddir)/src; \
+	for file in $$cpplist; \
+	do \
+		clang-tidy $(abs_top_srcdir)/$$file --quiet --extra-arg=-std=c++17 -- -I$(abs_top_builddir)/src -I. -I$(abs_top_srcdir)/src -I$(abs_top_builddir)/include -I$(abs_top_builddir) $(CXXFLAGS) ;\
+	done;
+
