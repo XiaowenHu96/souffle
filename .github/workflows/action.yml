@@ -4,7 +4,7 @@ on: pull_request
 
 jobs:
   basic:
-    runs-on: ubuntu-latest
+    runs-on: uself-hosted
 
     steps:
     - uses: actions/checkout@v2
