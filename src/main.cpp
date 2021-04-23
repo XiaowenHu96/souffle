@@ -485,7 +485,7 @@ int main(int argc, char** argv) {
             mk<ast::transform::ComponentInstantiationTransformer>(),
             mk<ast::transform::IODefaultsTransformer>(),
             mk<ast::transform::SimplifyAggregateTargetExpressionTransformer>(),
-            mk<ast::transform::UniqueAggregationVariablesTransformer>(),
+            mk<ast::transform__::UniqueAggregationVariablesTransformer>(),
             mk<ast::transform::FixpointTransformer>(mk<ast::transform::PipelineTransformer>(
                     mk<ast::transform::ResolveAnonymousRecordAliasesTransformer>(),
                     mk<ast::transform::FoldAnonymousRecords>())),
