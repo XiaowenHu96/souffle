@@ -54,8 +54,8 @@
 #include "ram/Parallel.h"
 #include "ram/ParallelAggregate.h"
 #include "ram/ParallelIfExists.h"
-    #include "ram/ParallelIndexAggregate.h"
-    #include "ram/ParallelIndexIfExists.h"
+#include "ram/ParallelIndexAggregate.h"
+#include "ram/ParallelIndexIfExists.h"
 #include "ram/ParallelIndexScan.h"
 #include "ram/ParallelScan.h"
 #include "ram/Program.h"
@@ -178,8 +178,9 @@ void* Engine::getMethodHandle(const std::string& method) {
     // load DLLs (if not done yet)
     for (void* libHandle : loadDLL()) {
         auto* methodHandle = dlsym(libHandle, method.c_str());
-        if (methodHandle != nullptr) { return 
-            methodHandle; }
+        if (methodHandle != nullptr) {
+            return methodHandle;
+        }
     }
     return nullptr;
 }
