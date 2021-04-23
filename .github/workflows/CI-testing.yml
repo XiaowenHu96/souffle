@@ -2,7 +2,7 @@ name: CI-testing
 
 on: 
   pull_request:
-    [opened, edited]
+    types: [opened, edited]
   workflow_dispatch:
 
 jobs:
